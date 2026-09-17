@@ -35,8 +35,9 @@ except ModuleNotFoundError:  # pragma: no cover
 
 log = logging.getLogger(__name__)
 
-OVERRIDE_FILE = "squad_override.toml"
-LOCAL_OVERRIDE_FILE = "squad_override.local.toml"  # git-ignored; wins over the committed file
+# The file lives at settings.squad_override_path ([paths] squad_override, env FPL_PATHS_SQUAD_OVERRIDE).
+# A git-ignored sibling named <stem>.local.toml wins over it, so a collaborator can keep a private squad.
+LOCAL_SUFFIX = ".local"
 
 
 @dataclass(frozen=True)
@@ -61,8 +62,9 @@ def _as_spec(value: Any) -> dict[str, Any]:
 
 
 def load_override(settings: Settings) -> SquadOverride | None:
-    local = settings.project_root / "config" / LOCAL_OVERRIDE_FILE
-    path = local if local.exists() else settings.project_root / "config" / OVERRIDE_FILE
+    committed = settings.squad_override_path
+    local = committed.with_name(f"{committed.stem}{LOCAL_SUFFIX}{committed.suffix}")
+    path = local if local.exists() else committed
     if not path.exists():
         return None
     with open(path, "rb") as fh:

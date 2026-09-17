@@ -72,6 +72,9 @@ raw_dir = "data/raw"
 duckdb_path = "data/fpl.duckdb"
 reports_dir = "reports"
 sql_dir = "sql"
+# Pre-deadline squad file (see README "Deadline-day gotcha"). A sibling
+# squad_override.local.toml (git-ignored) takes precedence if it exists.
+squad_override = "config/squad_override.toml"
 
 [api]
 base_url = "https://fantasy.premierleague.com/api"

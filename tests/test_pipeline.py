@@ -103,12 +103,11 @@ def test_build_without_player_history(tmp_path, project_root, monkeypatch, flag)
     from fpl_analysis.config import load_settings
     from fpl_analysis.store import build
 
-    from .synthetic import build_snapshot
+    from .synthetic import build_snapshot, hermetic_paths
 
     build_snapshot(tmp_path / "raw", include_history=False)
-    monkeypatch.setenv("FPL_PATHS_RAW_DIR", str(tmp_path / "raw"))
-    monkeypatch.setenv("FPL_PATHS_DUCKDB_PATH", str(tmp_path / "fpl.duckdb"))
-    monkeypatch.setenv("FPL_PATHS_REPORTS_DIR", str(tmp_path / "reports"))
+    for key, value in hermetic_paths(tmp_path).items():
+        monkeypatch.setenv(key, value)
     s = load_settings(project_root / "config" / "settings.toml")
     result = build(s)
     assert result["raw_counts"]["player_history"] == 0

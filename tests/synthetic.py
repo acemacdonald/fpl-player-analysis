@@ -48,6 +48,21 @@ def _round_robin(n_teams: int) -> list[list[tuple[int, int]]]:
     return rounds + [[(a, h) for h, a in rnd] for rnd in rounds]
 
 
+
+def hermetic_paths(workspace: Path) -> dict[str, str]:
+    """Env overrides that point every settings path into ``workspace``.
+
+    Tests must never see the live ``config/`` values: the raw dir, warehouse and reports go to the temp
+    workspace, and the squad override points at a file that does not exist, so a real
+    ``config/squad_override.toml`` (real player names the synthetic season lacks) cannot leak in.
+    """
+    return {
+        "FPL_PATHS_RAW_DIR": str(workspace / "raw"),
+        "FPL_PATHS_DUCKDB_PATH": str(workspace / "fpl.duckdb"),
+        "FPL_PATHS_REPORTS_DIR": str(workspace / "reports"),
+        "FPL_PATHS_SQUAD_OVERRIDE": str(workspace / "no_squad_override.toml"),
+    }
+
 def build_snapshot(out_dir: Path, seed: int = 42, include_history: bool = True,
                    include_entry: bool = True, entry_id: int = 234865) -> Path:
     rng = random.Random(seed)
