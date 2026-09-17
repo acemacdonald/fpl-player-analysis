@@ -36,6 +36,7 @@ except ModuleNotFoundError:  # pragma: no cover
 log = logging.getLogger(__name__)
 
 OVERRIDE_FILE = "squad_override.toml"
+LOCAL_OVERRIDE_FILE = "squad_override.local.toml"  # git-ignored; wins over the committed file
 
 
 @dataclass(frozen=True)
@@ -60,7 +61,8 @@ def _as_spec(value: Any) -> dict[str, Any]:
 
 
 def load_override(settings: Settings) -> SquadOverride | None:
-    path = settings.project_root / "config" / OVERRIDE_FILE
+    local = settings.project_root / "config" / LOCAL_OVERRIDE_FILE
+    path = local if local.exists() else settings.project_root / "config" / OVERRIDE_FILE
     if not path.exists():
         return None
     with open(path, "rb") as fh:

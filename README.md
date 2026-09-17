@@ -81,6 +81,11 @@ Thursday evening `fpl refresh`; Friday `fpl build && fpl report`, read the repor
 calls on the FPL site, `git commit reports/`. Under five minutes. Details and the season plan:
 [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md).
 
+## Contributing
+
+Branch from `main`, open a pull request, get a review, squash-merge. Setup, conventions and the
+full workflow: [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## Development
 
 ```bash

@@ -23,6 +23,9 @@ data/*.duckdb.wal
 # --- Cowork workspace memory (personal, never pushed) ---
 MEMORY.md
 
+# --- Personal, uncommitted config (e.g. a collaborator's own squad override) ---
+config/*.local.toml
+
 # --- OS / editor ---
 .DS_Store
 .vscode/
