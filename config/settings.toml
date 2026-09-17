@@ -1,0 +1,81 @@
+# FPL Player Analysis — project settings
+# Loaded by fpl_analysis.config.load_settings(). Every value here can be
+# overridden by an environment variable of the form FPL_<SECTION>_<KEY>
+# (e.g. FPL_MANAGER_ENTRY_ID=123456).
+
+[manager]
+# Your FPL team ID. It is the number in the URL when you view your team:
+# https://fantasy.premierleague.com/entry/<ENTRY_ID>/event/<GW>
+#entry_id = 234865
+entry_id = 246237
+
+# Free transfers are NOT exposed by the public API. The pipeline estimates
+# them from your transfer history (see fpl_analysis.squad.estimate_free_transfers).
+# Set this to override the estimate if you know the real number, or leave as -1.
+free_transfers_override = -1
+
+[analysis]
+# How many upcoming gameweeks the expected-points model looks across.
+horizon_gameweeks = 5
+
+# Ownership threshold (%) below which a player counts as a "differential".
+differential_max_ownership = 10.0
+
+# Players whose chance of playing next round is below this are flagged as risks
+# and excluded from transfer-in suggestions.
+min_chance_of_playing = 75
+
+# Minimum minutes played this season before a player's own per-90 rates are
+# trusted over their season points-per-game (protects against 1-cameo wonders).
+min_minutes_for_rates = 180
+
+# Weights of the three signals blended into a player's base points rate.
+# They must sum to 1.0. See docs/SCORING_MODEL.md for the reasoning.
+weight_form = 0.45
+weight_season_ppg = 0.30
+weight_xgi = 0.25
+
+# Fixture difficulty multipliers applied to the base rate, keyed by the FPL FDR (1-5).
+[analysis.fdr_multiplier]
+"1" = 1.25
+"2" = 1.15
+"3" = 1.00
+"4" = 0.85
+"5" = 0.70
+
+[report]
+# Timezone used to print the deadline in the report.
+timezone = "Europe/Madrid"
+# Number of players listed per position in the "top picks" table.
+top_n_per_position = 8
+# Number of captaincy options shown.
+captaincy_n = 6
+# Number of transfer suggestions per outgoing squad player.
+transfer_suggestions_n = 3
+
+[chips]
+# "Best Free Hit / Wildcard team" sections. Both squads are solved exactly under FPL rules
+# (2/5/5/3, max 3 per club, budget) maximising the same modelled EP the report ranks by:
+# Free Hit -> ep_next (one gameweek), Wildcard -> ep_horizon (the analysis horizon).
+# Budget = your squad value + bank; set budget_override_m > 0 to model a different budget.
+budget_override_m = -1
+# Weight on bench players' EP (0 = ignore the bench, 1 = value it like a starter).
+# Free Hit is one week: a bench player only matters if a starter misses. Wildcard is permanent:
+# bench quality matters more because auto-subs happen over many weeks.
+bench_weight_freehit = 0.05
+bench_weight_wildcard = 0.15
+# Leave out players flagged below min_chance_of_playing.
+exclude_injury_risk = true
+
+[paths]
+raw_dir = "data/raw"
+duckdb_path = "data/fpl.duckdb"
+reports_dir = "reports"
+sql_dir = "sql"
+
+[api]
+base_url = "https://fantasy.premierleague.com/api"
+timeout_seconds = 30
+max_retries = 3
+# Pause between element-summary calls (one per player) to be a polite API citizen.
+per_player_sleep_seconds = 0.15

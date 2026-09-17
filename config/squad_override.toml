@@ -1,0 +1,40 @@
+# Manual squad override for the UPCOMING gameweek.
+#
+# Why: the public FPL API only reveals your picks and transfers for a gameweek AFTER its
+# deadline. Before the deadline the report would model against last week's squad. When you
+# have made transfers, state the squad you actually hold here and set enabled = true; the
+# build then uses it instead of the API picks and the report says so in its header.
+#
+# Names are FPL "web names" (as shown on the site). If a name matches two players, qualify it:
+#   { name = "Palmer", team = "IPS" }   or   { name = "Palmer", position = "GKP" }
+# Remember to set enabled = false again after the deadline (the API picks take over then).
+
+enabled = true
+gameweek = 5                 # the gameweek this squad is for (defaults to the next GW)
+bank_m = 0.0                 # money in the bank AFTER your transfers, in £m
+free_transfers = -1          # your real FT count for this GW; -1 = keep the estimate
+active_chip = ""             # "" none, or wildcard / freehit / bboost / 3xc
+captain = "Haaland"
+vice_captain = "Gakpo"
+
+starters = [                 # exactly 11, in formation order: GKP, DEFs, MIDs, FWDs
+    "Raya",
+    "N.Williams", "Calafiori", "Bogle",
+    "Ndiaye", "Ødegaard", "Cunha", "Gakpo",
+    "Haaland", "Isak", "Barry"
+]
+bench = [                    # exactly 4, in bench order: GKP first
+    { name = "Verbruggen", position = "GKP" },
+    "Dedić", "M.Sangaré", "Virgil"
+]
+
+#starters = [                 # exactly 11, in formation order: GKP, DEFs, MIDs, FWDs
+#    "Raya",
+#    "Williams", "Calafiori", "Bogle",
+#    "Ndiaye", "Odegaard", "Cunha", "Gakpo", "M.Sangaré",
+#    "Haaland", "Wissa",
+#]
+#bench = [                    # exactly 4, in bench order: GKP first
+#    { name = "Palmer", position = "GKP" },
+#    "João Pedro", "De Cuyper", "van Ewijk",
+#]

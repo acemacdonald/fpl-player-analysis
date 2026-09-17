@@ -1,0 +1,186 @@
+# Gameweek {{ gameweek }} — Decision Report
+
+_Generated {{ generated_at }} from snapshot `{{ snapshot_id }}`. Deadline: **{{ deadline }}**. Model horizon: GW{{ gameweek }}–GW{{ gameweek + horizon - 1 }}._
+
+{% if has_squad %}
+## 1. Where I stand
+
+| | |
+|---|---|
+| Team | **{{ manager.team_name }}** ({{ manager.manager }}) |
+| Overall points / rank | {{ manager.overall_points }} / {{ "{:,}".format(manager.overall_rank) if manager.overall_rank else "—" }} |
+| Last GW points | {{ manager.last_gw_points }} (bench: {{ points_on_bench }}) |
+| Squad shown | {% if picks_source == 'manual override' %}**GW{{ picks_gameweek }} squad from `config/squad_override.toml`** (the API hides pre-deadline picks){% else %}GW{{ picks_gameweek }} picks from the API{% if picks_gameweek and picks_gameweek < gameweek %} — **pre-transfer squad**; the API only reveals GW{{ gameweek }} picks after the deadline. Use `config/squad_override.toml` to model your real squad{% endif %}{% endif %} |
+| Squad value / bank | {% if squad_value_m is not none %}£{{ "%.1f"|format(squad_value_m) }}m{{ squad_value_note }}{% else %}—{% endif %} / £{{ "%.1f"|format(bank_m) }}m |
+{% if weekly and weekly.known %}
+| Transfers made this GW | {% if weekly.made == 0 %}none (override squad matches the GW{{ picks_gameweek - 1 }} picks){% else %}**{{ weekly.made }}** — in: {{ weekly.ins|join(", ") }}; out: {{ weekly.outs|join(", ") }}{% endif %} |
+| Free transfers | {{ weekly.ft_in if weekly.ft_in is not none else "?" }} going into GW{{ gameweek }} ({{ free_transfers.source }}){% if weekly.chip_free %} — **{{ active_chip }} active, transfers are free** → {{ weekly.ft_left }} still banked{% elif weekly.ft_left is not none %} → **{{ weekly.ft_left }} left**{% if weekly.hit %}, **hit taken −{{ weekly.hit }}**{% else %}, no hit{% endif %}{% endif %} |
+{% else %}
+| Free transfers | **{{ free_transfers.value if free_transfers.value is not none else "?" }}** ({{ free_transfers.source }}) |
+{% endif %}
+| Chips used | {{ chips_used }}{% if active_chip %} — **{{ active_chip }} active** {% endif %} |
+| Modelled EP of current XI next GW | **{{ squad_ep_next }}** (captain not doubled) |
+
+### Starting XI
+
+{{ starters_md }}
+
+### Bench
+
+{{ bench_md }}
+
+## 2. Squad risks
+
+{% if risks_md == "_No rows._" %}
+No injury, suspension or availability flags in the squad. Check again after the pressers.
+{% else %}
+{{ risks_md }}
+
+_Players with chance of playing below the configured threshold are excluded from transfer-in suggestions and their EP is scaled by that chance._
+{% endif %}
+
+## 3. Captaincy
+
+Current armband: **{{ captain_now.captain }}** (vice: {{ captain_now.vice }}).
+
+**Best options you own**
+
+{{ captaincy_owned_md }}
+
+**Best options overall**
+
+{{ captaincy_md }}
+
+## 4. Transfers
+
+**Highest-gain single move per outgoing player** (top 5 by modelled gain over the horizon)
+
+{{ best_single_md }}
+
+**Full shortlist by outgoing player** (weakest horizon EP first)
+
+{{ transfers_md }}
+
+{% if weekly and weekly.known and weekly.ft_left is not none %}
+{% if weekly.chip_free %}
+_**{{ active_chip }} active — every move this week is free.**_
+{% elif weekly.ft_left == 0 %}
+_**You have no free transfers left this week{% if weekly.hit %} (already {{ -weekly.hit }} in hits){% endif %}.** Every further move costs 4 points: only take a row whose `Gain` comfortably exceeds 4 within the horizon._
+{% else %}
+_**You have {{ weekly.ft_left }} free transfer{{ "s" if weekly.ft_left != 1 else "" }} left this week.** Moves beyond that cost 4 points each — a row is worth a hit only if its `Gain` comfortably exceeds 4 within the horizon._
+{% endif %}
+{% endif %}
+_Constraints applied: same position, affordable with current bank (current price used as selling price — see backlog), max 3 per club, candidate available and not an injury risk._
+
+{% else %}
+## 1. Squad
+
+_No entry data in this snapshot — run `fpl refresh` without `--no-entry` to enable squad-aware sections (standing, risks, captaincy you own, transfers)._
+
+## 3. Captaincy — best options overall
+
+{{ captaincy_md }}
+
+{% endif %}
+## 5. Best players by position (modelled EP over the horizon)
+
+### Goalkeepers
+
+{{ top_picks_md.GKP }}
+
+### Defenders
+
+{{ top_picks_md.DEF }}
+
+### Midfielders
+
+{{ top_picks_md.MID }}
+
+### Forwards
+
+{{ top_picks_md.FWD }}
+
+## 6. Value and differentials
+
+**Best EP per £m** (players with enough minutes for their rates to be trusted)
+
+{{ value_md }}
+
+**Differentials** (owned by under {{ differential_threshold }}%)
+
+{{ differentials_md }}
+
+## 7. Fixture outlook by club (next {{ horizon }} GWs)
+
+_Score = sum of FDR × home/away multipliers across the horizon; higher is better. Doubles score higher by design._
+
+{{ fixtures_md }}
+
+## 8. Market movers this gameweek
+
+{{ movers_md }}
+
+## 9. Best Free Hit team (GW{{ gameweek }} only)
+
+{% if chips.freehit %}
+_Optimal legal 15 for **this gameweek alone**, maximising modelled `EP next` with the captain doubled. Budget £{{ "%.1f"|format(chips.freehit.budget_m) }}m ({{ chips.freehit.budget_source }}); squad costs £{{ "%.1f"|format(chips.freehit.cost_m) }}m._
+
+| | |
+|---|---|
+| Modelled XI EP (captain doubled) | **{{ "%.2f"|format(chips.freehit.xi_ep) }}** |
+{% if current_xi_ep_next_c is not none %}
+| Your current XI, same basis | {{ "%.2f"|format(current_xi_ep_next_c) }} → **Free Hit gain {{ "%+.2f"|format(chips.freehit.xi_ep - current_xi_ep_next_c) }}** |
+{% endif %}
+| Captain | {{ chips.freehit.captain }} |
+| Players you already own | {{ chips.freehit.owned_count }} of 15 |
+
+**Starting XI**
+
+{{ chips.freehit.starters_md }}
+
+**Bench** (bench EP {{ "%.2f"|format(chips.freehit.bench_ep) }} — barely weighted: a Free Hit bench only matters if a starter misses)
+
+{{ chips.freehit.bench_md }}
+
+_Rule of thumb: a Free Hit is worth playing when the gain over your current XI is large **and** the gameweek is unusual (blanks, doubles, a squad wrecked by injuries). A gain of a few points in a normal week is not a reason to burn it._
+{% else %}
+_Not available — the optimiser found no feasible squad (check budget and eligible players)._
+{% endif %}
+
+## 10. Best Wildcard team (GW{{ gameweek }}–GW{{ gameweek + horizon - 1 }})
+
+{% if chips.wildcard %}
+_Optimal legal 15 for the **next {{ horizon }} gameweeks**, maximising modelled `EP horizon` with the captain doubled. Budget £{{ "%.1f"|format(chips.wildcard.budget_m) }}m ({{ chips.wildcard.budget_source }}); squad costs £{{ "%.1f"|format(chips.wildcard.cost_m) }}m._
+
+| | |
+|---|---|
+| Modelled XI EP over the horizon (captain doubled) | **{{ "%.2f"|format(chips.wildcard.xi_ep) }}** |
+{% if current_xi_ep_horizon_c is not none %}
+| Your current XI, same basis | {{ "%.2f"|format(current_xi_ep_horizon_c) }} → **Wildcard gain {{ "%+.2f"|format(chips.wildcard.xi_ep - current_xi_ep_horizon_c) }}** over {{ horizon }} GWs |
+{% endif %}
+| Captain (by horizon EP — re-check weekly) | {{ chips.wildcard.captain }} |
+| Players you already own | {{ chips.wildcard.owned_count }} of 15 → {{ 15 - chips.wildcard.owned_count }} changes |
+
+**Starting XI**
+
+{{ chips.wildcard.starters_md }}
+
+**Bench** (bench EP {{ "%.2f"|format(chips.wildcard.bench_ep) }} — weighted more than the Free Hit bench, because a Wildcard squad has to survive rotation and injuries for weeks)
+
+{{ chips.wildcard.bench_md }}
+
+_Rule of thumb: compare the Wildcard gain with what {{ 15 - chips.wildcard.owned_count }} changes would cost as hits (4 points each beyond your free transfers). If a couple of ordinary transfers close most of the gap, keep the chip. The horizon is {{ horizon }} GWs — the model is silent on fixtures beyond that._
+{% else %}
+_Not available — the optimiser found no feasible squad (check budget and eligible players)._
+{% endif %}
+
+---
+
+### How to read the numbers
+
+- **EP** is modelled expected points: `base rate × availability × fixture multiplier × home multiplier`, where the base rate blends form ({{ "%.0f"|format(weights[0]*100) }}%), season points-per-game ({{ "%.0f"|format(weights[1]*100) }}%) and an underlying-stats rate from xG/xA/xGC ({{ "%.0f"|format(weights[2]*100) }}%). Full definition: `docs/SCORING_MODEL.md`.
+- **Avail** is chance-of-playing × share of team games started. A 0.50 means the model expects him on the pitch half the time.
+- **xGI/90** is expected goal involvements per 90 minutes — the cleanest single attacking signal the API gives.
+- **Form** is the API's own figure: average points per match over the last 30 days.
+- **Chip squads** (sections 9–10) are solved exactly under FPL's rules — 2/5/5/3, max three per club, budget, legal XI — by a small integer programme over the same EP figures; no heuristics. Bench players carry a small weight (config `[chips]`).
+- The model is a ranking aid, not an oracle. Sanity-check every call against team news and your own eyes.
