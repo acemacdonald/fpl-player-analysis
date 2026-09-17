@@ -9,7 +9,7 @@ import pytest
 
 from fpl_analysis.config import load_settings
 
-from .synthetic import build_snapshot
+from .synthetic import build_snapshot, hermetic_paths
 
 
 @pytest.fixture(scope="session")
@@ -27,11 +27,7 @@ def workspace(tmp_path_factory) -> Path:
 
 @pytest.fixture(scope="session")
 def settings(workspace, project_root):
-    env = {
-        "FPL_PATHS_RAW_DIR": str(workspace / "raw"),
-        "FPL_PATHS_DUCKDB_PATH": str(workspace / "fpl.duckdb"),
-        "FPL_PATHS_REPORTS_DIR": str(workspace / "reports"),
-    }
+    env = hermetic_paths(workspace)  # never the live config/ values — see synthetic.hermetic_paths
     old = {k: os.environ.get(k) for k in env}
     os.environ.update(env)
     try:

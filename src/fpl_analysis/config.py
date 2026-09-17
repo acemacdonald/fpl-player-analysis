@@ -56,6 +56,7 @@ class Settings:
     duckdb_path: Path
     reports_dir: Path
     sql_dir: Path
+    squad_override_path: Path
     base_url: str
     timeout_seconds: int
     max_retries: int
@@ -96,8 +97,15 @@ def load_settings(path: str | Path | None = None) -> Settings:
     with open(settings_path, "rb") as fh:
         cfg = tomllib.load(fh)
 
-    def get(section: str, key: str) -> Any:
-        return _env_override(section, key, cfg[section][key])
+    def get(section: str, key: str, default: Any = None) -> Any:
+        """TOML value with env override; ``default`` lets a newer key be absent from an older file."""
+        try:
+            base = cfg[section][key]
+        except KeyError:
+            if default is None:
+                raise
+            base = default
+        return _env_override(section, key, base)
 
     fdr = {int(k): float(v) for k, v in cfg["analysis"]["fdr_multiplier"].items()}
 
@@ -125,6 +133,7 @@ def load_settings(path: str | Path | None = None) -> Settings:
         duckdb_path=root / get("paths", "duckdb_path"),
         reports_dir=root / get("paths", "reports_dir"),
         sql_dir=root / get("paths", "sql_dir"),
+        squad_override_path=root / get("paths", "squad_override", "config/squad_override.toml"),
         base_url=str(get("api", "base_url")).rstrip("/"),
         timeout_seconds=int(get("api", "timeout_seconds")),
         max_retries=int(get("api", "max_retries")),

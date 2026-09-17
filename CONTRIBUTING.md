@@ -49,7 +49,9 @@ main  ─────●──────────────●───�
 5. **Review.** The maintainer is auto-requested (CODEOWNERS). Expect comments; push follow-up
    commits to the same branch — the PR updates itself. Don't force-push a branch under review.
 6. **Merge.** The maintainer squash-merges once CI is green and the review is approved, and
-   deletes the branch. You then `git checkout main && git pull` and start the next one.
+   deletes the branch (the "Delete branch" button on the merged PR). You then
+   `git checkout main && git pull && git branch -D <branch>` and start the next one — `-D`, because a
+   squash-merged branch looks unmerged to git. Never "publish" a branch again after it has merged.
 
 Never `git push` to `main` directly — the branch rule will reject it anyway.
 
@@ -66,6 +68,9 @@ Never `git push` to `main` directly — the branch rule will reject it anyway.
 - **Raw is immutable.** Fix data problems in staging SQL, never by editing snapshots.
 - **Tests for behaviour.** The synthetic season in `tests/synthetic.py` runs everything
   offline; extend it rather than adding network-dependent tests.
+- **Tests are hermetic.** They must never depend on the live `config/` values (your entry id, your
+  squad override) — `tests/conftest.py` redirects every path via `FPL_PATHS_*` env vars. A test that
+  breaks when someone changes their own settings is a broken test, not a broken pipeline.
 - **Reports are the decision log.** Don't rewrite a past gameweek's `reports/GWxx.md`.
 
 ## 4. Things that are not in the repo
