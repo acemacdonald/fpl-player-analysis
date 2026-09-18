@@ -30,3 +30,6 @@ config/*.local.toml
 .DS_Store
 .vscode/
 *.log
+
+# --- Scratch folder for files this workspace cannot delete (never commit) ---
+_to_delete/
