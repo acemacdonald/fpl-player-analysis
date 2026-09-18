@@ -30,11 +30,11 @@ vice_captain = "Gakpo"
 
 starters = [                 # exactly 11, in formation order: GKP, DEFs, MIDs, FWDs
     "Raya",
-    "Kayode", "Calafiori", "Gvardiol",
+    "De Cuyper", "Calafiori", "Gvardiol",
     "Tavernier", "Saka", "Gibbs-White", "Gakpo", "M.Sangaré",
     "Haaland", "Wissa",
 ]
 bench = [                    # exactly 4, in bench order: GKP first
     { name = "Palmer", position = "GKP" },
-    "João Pedro", "De Cuyper", "van Ewijk",
+    "João Pedro", "Kayode", "van Ewijk",
 ]
