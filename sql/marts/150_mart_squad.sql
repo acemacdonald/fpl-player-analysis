@@ -34,6 +34,7 @@ SELECT
     h.next_fixture_label,
     h.fixture_run,
     h.ep_next,
+    h.ep_gw2,
     h.ep_horizon,
     h.rank_in_position,
     h.snapshot_id

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fpl_analysis.optimiser import CHIPS, solve_chip
+from fpl_analysis.optimiser import CHIPS, DEFAULT_RULES, solve_chip, squad_rules
 from fpl_analysis.store import connect
 
 
@@ -37,7 +37,7 @@ def test_chip_squads_are_legal(built, settings):
         con.close()
 
     expected = {"GKP": 2, "DEF": 5, "MID": 5, "FWD": 3}
-    limits = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}
+    limits = {"GKP": (1, 1), "DEF": (3, 5), "MID": (2, 5), "FWD": (1, 3)}  # the rulebook, incl. 5-2-3
     seen_chips = set()
     for chip, pos, n, starters in comp:
         seen_chips.add(chip)
@@ -67,3 +67,35 @@ def test_optimum_beats_greedy_and_respects_budget(built, settings):
 def test_infeasible_budget_returns_none(built, settings):
     players = _players(settings)
     assert solve_chip(players, "wildcard", budget_m=10.0, settings=settings) is None
+
+
+def test_following_gw_free_hit_scores_on_gw2(built, settings):
+    """The informational GW+1 Free Hit optimises ep_gw2, and its XI EP is consistent with the rows."""
+    con = connect(settings, read_only=True)
+    try:
+        rows = con.execute(
+            """
+            SELECT c.chip_ep, h.ep_gw2, c.is_starter, c.is_captain, c.xi_ep
+            FROM marts.mart_chip_squads c JOIN marts.mart_player_horizon h USING (player_id)
+            WHERE c.chip = 'freehit_gw2'
+            """
+        ).df()
+    finally:
+        con.close()
+    assert len(rows) == 15
+    assert (rows["chip_ep"] - rows["ep_gw2"]).abs().max() < 1e-9
+    starters = rows[rows["is_starter"].astype(bool)]
+    xi = starters["chip_ep"].sum() + starters.loc[starters["is_captain"].astype(bool), "chip_ep"].sum()
+    assert abs(xi - rows["xi_ep"].iloc[0]) < 1e-6
+
+
+def test_squad_rules_come_from_the_api(built, settings):
+    """stg_positions carries squad_select / min / max play; the optimiser must use those, not constants."""
+    con = connect(settings, read_only=True)
+    try:
+        rules = squad_rules(con)
+    finally:
+        con.close()
+    assert rules.squad_by_pos == DEFAULT_RULES.squad_by_pos
+    assert rules.start_min == {"GKP": 1, "DEF": 3, "MID": 2, "FWD": 1}
+    assert rules.start_max == {"GKP": 1, "DEF": 5, "MID": 5, "FWD": 3}
