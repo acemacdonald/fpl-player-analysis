@@ -183,7 +183,8 @@ def build_report(settings: Settings, snapshot: SnapshotInfo | None = None,
         con.close()
 
     chips_ctx = {chip: _chip_context(chip_squads, chip, starters_ep_col)
-                 for chip, starters_ep_col in (("freehit", "ep_next"), ("wildcard", "ep_horizon"))}
+                 for chip, starters_ep_col in (("freehit", "ep_next"), ("freehit_gw2", "ep_gw2"),
+                                               ("wildcard", "ep_horizon"))}
 
     picks_source = _scalar(squad["picks_source"].iloc[0]) if has_squad else None
     active_chip = _scalar(squad["active_chip"].iloc[0]) if has_squad else None
@@ -246,6 +247,7 @@ def build_report(settings: Settings, snapshot: SnapshotInfo | None = None,
         points_on_bench=_scalar(latest_gw["points_on_bench"]) if latest_gw is not None else None,
         squad_ep_next=round(float(starters["ep_next"].sum()), 1) if has_squad else None,
         current_xi_ep_next_c=_xi_ep_with_captain(starters, "ep_next") if has_squad else None,
+        current_xi_ep_gw2_c=_xi_ep_with_captain(starters, "ep_gw2") if has_squad else None,
         current_xi_ep_horizon_c=_xi_ep_with_captain(starters, "ep_horizon") if has_squad else None,
         chips=chips_ctx,
         starters_md=_md(starters, {
@@ -383,14 +385,16 @@ def _chip_context(chip_squads: pd.DataFrame, chip: str, ep_col: str) -> dict[str
     df["owned_mark"] = df["in_current_squad"].map({True: "yes", False: ""})
     starters = df[df["is_starter"].astype(bool)]
     bench = df[~df["is_starter"].astype(bool)]
-    ep_label = "EP next" if ep_col == "ep_next" else "EP horizon"
+    ep_label, fixture_col, fixture_label = {
+        "ep_next": ("EP next", "next_fixture_label", "Next"),
+        "ep_gw2": ("EP GW+1", "gw2_fixture_label", "Fixture"),
+        "ep_horizon": ("EP horizon", "fixture_run", "Fixtures"),
+    }[ep_col]
     cols = {
         "slot": "#", "position_code": "Pos", "web_name": "Player", "captain_mark": "",
         "team_short_name": "Team", "price_m": "£m", "selected_by_pct": "Own %",
         "form_signal": "Form", "xgi_per_90": "xGI/90",
-        ("next_fixture_label" if ep_col == "ep_next" else "fixture_run"): (
-            "Next" if ep_col == "ep_next" else "Fixtures"
-        ),
+        fixture_col: fixture_label,
         "chip_ep": ep_label, "owned_mark": "Own?",
     }
     first = df.iloc[0]

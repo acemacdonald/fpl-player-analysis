@@ -46,6 +46,10 @@ from .config import Settings
 
 log = logging.getLogger(__name__)
 
+# Squad rules. The live values come from the API (bootstrap ``element_types``: squad_select,
+# squad_min_play, squad_max_play — staged as ``stg_positions``) via ``squad_rules()``; these
+# constants are the 2026/27 rulebook and the fallback for direct calls (tests, notebooks).
+# Note 5-2-3 is legal: the minimum is TWO midfielders, not three.
 SQUAD_BY_POS = {"GKP": 2, "DEF": 5, "MID": 5, "FWD": 3}
 START_MIN = {"GKP": 1, "DEF": 3, "MID": 2, "FWD": 1}
 START_MAX = {"GKP": 1, "DEF": 5, "MID": 5, "FWD": 3}
@@ -55,8 +59,37 @@ POS_ORDER = {"GKP": 1, "DEF": 2, "MID": 3, "FWD": 4}
 CHIPS = {
     # chip -> (EP column to maximise, human label)
     "freehit": ("ep_next", "Free Hit"),
+    "freehit_gw2": ("ep_gw2", "Free Hit (following GW)"),  # informational: how far is my squad from GW+1's best?
     "wildcard": ("ep_horizon", "Wildcard"),
 }
+
+
+@dataclass(frozen=True)
+class SquadRules:
+    squad_by_pos: dict[str, int]
+    start_min: dict[str, int]
+    start_max: dict[str, int]
+    max_per_club: int = MAX_PER_CLUB
+
+
+DEFAULT_RULES = SquadRules(SQUAD_BY_POS, START_MIN, START_MAX)
+
+
+def squad_rules(con: duckdb.DuckDBPyConnection) -> SquadRules:
+    """Read the squad rules the API publishes (``stg_positions``); fall back to the constants."""
+    try:
+        rows = con.execute(
+            "SELECT position_code, squad_size, min_starters, max_starters FROM staging.stg_positions"
+        ).fetchall()
+    except duckdb.Error:  # pragma: no cover - staging missing
+        return DEFAULT_RULES
+    if {r[0] for r in rows} != set(SQUAD_BY_POS):
+        return DEFAULT_RULES
+    return SquadRules(
+        squad_by_pos={r[0]: int(r[1]) for r in rows},
+        start_min={r[0]: int(r[2]) for r in rows},
+        start_max={r[0]: int(r[3]) for r in rows},
+    )
 
 
 @dataclass(frozen=True)
@@ -79,8 +112,10 @@ def _eligible(players: pd.DataFrame, ep_col: str, settings: Settings) -> pd.Data
     return df.reset_index(drop=True)
 
 
-def solve_chip(players: pd.DataFrame, chip: str, budget_m: float, settings: Settings) -> ChipSolution | None:
-    """Return the optimal 15 for ``chip`` under ``budget_m``, or None if infeasible."""
+def solve_chip(
+    players: pd.DataFrame, chip: str, budget_m: float, settings: Settings, rules: SquadRules = DEFAULT_RULES
+) -> ChipSolution | None:
+    """Return the optimal 15 for ``chip`` under ``budget_m`` and ``rules``, or None if infeasible."""
     ep_col, _ = CHIPS[chip]
     df = _eligible(players, ep_col, settings)
     n = len(df)
@@ -109,7 +144,7 @@ def solve_chip(players: pd.DataFrame, chip: str, budget_m: float, settings: Sett
         rows.append((coef, lo, hi))
 
     # squad composition
-    for p, k in SQUAD_BY_POS.items():
+    for p, k in rules.squad_by_pos.items():
         r = np.zeros(nv)
         r[X:Y] = pos == p
         add(r, k, k)
@@ -117,10 +152,10 @@ def solve_chip(players: pd.DataFrame, chip: str, budget_m: float, settings: Sett
     r = np.zeros(nv)
     r[Y:C] = 1
     add(r, 11, 11)
-    for p in SQUAD_BY_POS:
+    for p in rules.squad_by_pos:
         r = np.zeros(nv)
         r[Y:C] = pos == p
-        add(r, START_MIN[p], START_MAX[p])
+        add(r, rules.start_min[p], rules.start_max[p])
     # exactly one captain
     r = np.zeros(nv)
     r[C:] = 1
@@ -129,7 +164,7 @@ def solve_chip(players: pd.DataFrame, chip: str, budget_m: float, settings: Sett
     for t in np.unique(club):
         r = np.zeros(nv)
         r[X:Y] = club == t
-        add(r, 0, MAX_PER_CLUB)
+        add(r, 0, rules.max_per_club)
     # budget
     r = np.zeros(nv)
     r[X:Y] = price
@@ -208,22 +243,23 @@ def _budget(con: duckdb.DuckDBPyConnection, settings: Settings) -> tuple[float, 
 
 
 def build_chip_squads(con: duckdb.DuckDBPyConnection, settings: Settings) -> dict[str, ChipSolution | None]:
-    """Solve both chips and write ``marts.mart_chip_squads``. Returns the solutions."""
+    """Solve every chip in ``CHIPS`` and write ``marts.mart_chip_squads``. Returns the solutions."""
     players = con.execute(
         """
         SELECT player_id, web_name, team_id, team_short_name, position_code, price_m, selected_by_pct,
                status, is_injury_risk, availability, form_signal, xgi_per_90, next_fixture_label,
-               fixture_run, fixtures_next_gw, ep_next, ep_horizon, snapshot_id
+               fixture_run, fixtures_next_gw, gw2_fixture_label, ep_next, ep_gw2, ep_horizon, snapshot_id
         FROM marts.mart_player_horizon
         """
     ).df()
     owned = set(con.execute("SELECT player_id FROM marts.mart_squad").df()["player_id"].tolist())
     budget_m, budget_source = _budget(con, settings)
+    rules = squad_rules(con)
 
     solutions: dict[str, ChipSolution | None] = {}
     frames: list[pd.DataFrame] = []
     for chip in CHIPS:
-        sol = solve_chip(players, chip, budget_m, settings)
+        sol = solve_chip(players, chip, budget_m, settings, rules)
         solutions[chip] = sol
         if sol is None:
             continue
@@ -251,7 +287,8 @@ def build_chip_squads(con: duckdb.DuckDBPyConnection, settings: Settings) -> dic
                 position_code VARCHAR, price_m DOUBLE, selected_by_pct DOUBLE, status VARCHAR,
                 is_injury_risk BOOLEAN, availability DOUBLE, form_signal DOUBLE, xgi_per_90 DOUBLE,
                 next_fixture_label VARCHAR, fixture_run VARCHAR, fixtures_next_gw INTEGER,
-                ep_next DOUBLE, ep_horizon DOUBLE, snapshot_id VARCHAR, is_starter BOOLEAN,
+                gw2_fixture_label VARCHAR, ep_next DOUBLE, ep_gw2 DOUBLE, ep_horizon DOUBLE,
+                snapshot_id VARCHAR, is_starter BOOLEAN,
                 is_captain BOOLEAN, chip_ep DOUBLE, slot INTEGER, in_current_squad BOOLEAN,
                 xi_ep DOUBLE, cost_m DOUBLE, budget_m DOUBLE, budget_source VARCHAR
             )

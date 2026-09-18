@@ -147,7 +147,32 @@ _Rule of thumb: a Free Hit is worth playing when the gain over your current XI i
 _Not available — the optimiser found no feasible squad (check budget and eligible players)._
 {% endif %}
 
-## 10. Best Wildcard team (GW{{ gameweek }}–GW{{ gameweek + horizon - 1 }})
+## 10. Best Free Hit team (GW{{ gameweek + 1 }}) — for information
+
+{% if chips.freehit_gw2 %}
+_The same solve for the **following** gameweek, on the current snapshot: a yardstick for how far your squad is from the best possible XI one week out, not a chip plan. Team news, prices and this week's results will all move it. Budget £{{ "%.1f"|format(chips.freehit_gw2.budget_m) }}m; squad costs £{{ "%.1f"|format(chips.freehit_gw2.cost_m) }}m._
+
+| | |
+|---|---|
+| Modelled XI EP for GW{{ gameweek + 1 }} (captain doubled) | **{{ "%.2f"|format(chips.freehit_gw2.xi_ep) }}** |
+{% if current_xi_ep_gw2_c is not none %}
+| Your current XI, same basis | {{ "%.2f"|format(current_xi_ep_gw2_c) }} → **gap {{ "%+.2f"|format(chips.freehit_gw2.xi_ep - current_xi_ep_gw2_c) }}** |
+{% endif %}
+| Captain | {{ chips.freehit_gw2.captain }} |
+| Players you already own | {{ chips.freehit_gw2.owned_count }} of 15 |
+
+**Starting XI**
+
+{{ chips.freehit_gw2.starters_md }}
+
+**Bench** (bench EP {{ "%.2f"|format(chips.freehit_gw2.bench_ep) }})
+
+{{ chips.freehit_gw2.bench_md }}
+{% else %}
+_Not available — GW{{ gameweek + 1 }} is outside the horizon or the optimiser found no feasible squad._
+{% endif %}
+
+## 11. Best Wildcard team (GW{{ gameweek }}–GW{{ gameweek + horizon - 1 }})
 
 {% if chips.wildcard %}
 _Optimal legal 15 for the **next {{ horizon }} gameweeks**, maximising modelled `EP horizon` with the captain doubled. Budget £{{ "%.1f"|format(chips.wildcard.budget_m) }}m ({{ chips.wildcard.budget_source }}); squad costs £{{ "%.1f"|format(chips.wildcard.cost_m) }}m._
@@ -183,5 +208,5 @@ _Not available — the optimiser found no feasible squad (check budget and eligi
 - **xGI/90** is expected goal involvements per 90 minutes — the cleanest single attacking signal the API gives.
 - **Form** is the API's own figure: average points per match over the last 30 days.
 - **PPG** in the tables is the API's raw season points-per-game. Inside the model it is shrunk towards the position's typical level while a player has few games (`shrinkage_games` in config), so one big game does not read as a rate.
-- **Chip squads** (sections 9–10) are solved exactly under FPL's rules — 2/5/5/3, max three per club, budget, legal XI — by a small integer programme over the same EP figures; no heuristics. Bench players carry a small weight (config `[chips]`).
+- **Chip squads** (sections 9–11) are solved exactly under FPL's rules — 2/5/5/3, max three per club, budget, legal XI — by a small integer programme over the same EP figures; no heuristics. Bench players carry a small weight (config `[chips]`).
 - The model is a ranking aid, not an oracle. Sanity-check every call against team news and your own eyes.

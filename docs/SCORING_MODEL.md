@@ -141,18 +141,23 @@ A double gameweek is handled naturally — the player has two rows in
 
 ## 6. Chip squads — Best Free Hit / Best Wildcard team
 
-Sections 9 and 10 of the report pick the best *legal 15* rather than ranking individuals.
+Sections 9 to 11 of the report pick the best *legal 15* rather than ranking individuals.
 That is a constrained optimisation, so it is solved exactly as an integer programme
 (`src/fpl_analysis/optimiser.py`, SciPy's bundled HiGHS solver, < 1 s) — the one deliberate
 piece of analytics that is Python rather than SQL. Its only input is `mart_player_horizon`;
 its only output is `marts.mart_chip_squads`, which the report reads like any other mart.
+
+A third solve, **Best Free Hit team for the following gameweek** (report section 10), maximises
+`ep_gw2` — the EP of the gameweek after next. It is informational: a yardstick for how far the
+current squad sits from the best possible XI one week out, computed on today's snapshot. It is not
+a chip plan (team news, prices and this week's results will move it) and the report says so.
 
 ```
 maximise   Σ ep_i·y_i  +  Σ ep_i·c_i  +  w_bench · Σ ep_i·(x_i − y_i)
 
 x_i = in squad, y_i = starts (y ≤ x), c_i = captain (c ≤ y, exactly one)
 subject to  2 GKP / 5 DEF / 5 MID / 3 FWD in the squad
-            11 starters: 1 GKP, 3–5 DEF, 2–5 MID, 1–3 FWD
+            11 starters: 1 GKP, 3–5 DEF, 2–5 MID, 1–3 FWD   (from the API's element_types; 5-2-3 is legal)
             ≤ 3 players per club
             Σ price_i·x_i ≤ budget   (squad value + bank; config override)
 ```
