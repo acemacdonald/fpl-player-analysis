@@ -6,8 +6,8 @@
 [manager]
 # Your FPL team ID. It is the number in the URL when you view your team:
 # https://fantasy.premierleague.com/entry/<ENTRY_ID>/event/<GW>
-#entry_id = 234865
-entry_id = 246237
+entry_id = 234865
+# entry_id = 246237
 
 # Free transfers are NOT exposed by the public API. The pipeline estimates
 # them from your transfer history (see fpl_analysis.squad.estimate_free_transfers).
@@ -28,6 +28,12 @@ min_chance_of_playing = 75
 # Minimum minutes played this season before a player's own per-90 rates are
 # trusted over their season points-per-game (protects against 1-cameo wonders).
 min_minutes_for_rates = 180
+
+# Small-sample shrinkage of season points-per-game. A player's PPG is blended with the
+# typical PPG for his position, weighted by games played (minutes / 90) against this
+# many "phantom" games of the prior: (ppg x games + prior x k) / (games + k).
+# One 8-point game becomes ~3.6, not 8; after ten such games it is ~7. 0 disables.
+shrinkage_games = 3
 
 # Weights of the three signals blended into a player's base points rate.
 # They must sum to 1.0. See docs/SCORING_MODEL.md for the reasoning.

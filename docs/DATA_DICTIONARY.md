@@ -24,7 +24,7 @@ Grain and key columns for every model. Raw tables keep API names (see `FPL_API_R
 |-------|-------|-----|--------------|
 | `mart_team_fixture_outlook` | one row per team per upcoming fixture in horizon | (`team_id`, `fixture_id`) | `horizon_index` (1 = next GW), `fdr`, `fdr_multiplier`, `home_multiplier`, `fixture_label` e.g. `LIV (A)` |
 | `mart_team_fixture_summary` | one row per team | `team_id` | `fixtures_in_horizon`, `avg_fdr`, `fixture_score`, `fixture_run`, `fixture_rank` |
-| `mart_player_form` | one row per player | `player_id` | Signals: `form_signal`, `season_ppg`, `xgi_points_rate`, `availability`, `is_injury_risk`, `rates_are_trusted`, `last5_*` |
+| `mart_player_form` | one row per player | `player_id` | Signals: `form_signal`, `season_ppg` (raw), `season_ppg_shrunk`, `games_equiv`, `position_prior_ppg`, `xgi_points_rate`, `team_matches_played` (from finished fixtures), `start_share`, `availability`, `is_injury_risk`, `rates_are_trusted`, `last5_*` |
 | `mart_player_expected_points` | one row per player per upcoming fixture | (`player_id`, `fixture_id`) | `base_rate`, `expected_points`, all multipliers — the audit trail for any EP figure |
 | `mart_player_horizon` | one row per player | `player_id` | `ep_next`, `ep_horizon`, `ep_horizon_per_m`, `rank_overall`, `rank_in_position`, `fixture_run`, `api_ep_next` |
 | `mart_squad` | one row per pick | `player_id` | Picks joined to `mart_player_horizon` |

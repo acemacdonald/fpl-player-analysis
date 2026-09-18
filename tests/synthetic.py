@@ -75,7 +75,7 @@ def build_snapshot(out_dir: Path, seed: int = 42, include_history: bool = True,
         strength = rng.randint(2, 5)
         teams.append({
             "code": 100 + i, "draw": rng.randint(0, 2), "form": None, "id": i, "loss": rng.randint(0, 3),
-            "name": name, "played": CURRENT_GW, "points": rng.randint(0, 12), "position": i,
+            "name": name, "played": 0, "points": rng.randint(0, 12), "position": i,  # the real API never fills played
             "short_name": short, "strength": strength, "team_division": None, "unavailable": False,
             "win": rng.randint(0, 4), "strength_overall_home": 1000 + strength * 80,
             "strength_overall_away": 980 + strength * 80, "strength_attack_home": 1000 + strength * 70,

@@ -383,6 +383,7 @@ def model_variables(settings: Settings) -> dict[str, Any]:
         "differential_max_ownership": settings.differential_max_ownership,
         "min_chance_of_playing": settings.min_chance_of_playing,
         "min_minutes_for_rates": settings.min_minutes_for_rates,
+        "shrinkage_games": settings.shrinkage_games,
         "weight_form": settings.weight_form,
         "weight_season_ppg": settings.weight_season_ppg,
         "weight_xgi": settings.weight_xgi,

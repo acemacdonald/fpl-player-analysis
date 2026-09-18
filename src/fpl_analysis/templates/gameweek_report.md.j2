@@ -182,5 +182,6 @@ _Not available — the optimiser found no feasible squad (check budget and eligi
 - **Avail** is chance-of-playing × share of team games started. A 0.50 means the model expects him on the pitch half the time.
 - **xGI/90** is expected goal involvements per 90 minutes — the cleanest single attacking signal the API gives.
 - **Form** is the API's own figure: average points per match over the last 30 days.
+- **PPG** in the tables is the API's raw season points-per-game. Inside the model it is shrunk towards the position's typical level while a player has few games (`shrinkage_games` in config), so one big game does not read as a rate.
 - **Chip squads** (sections 9–10) are solved exactly under FPL's rules — 2/5/5/3, max three per club, budget, legal XI — by a small integer programme over the same EP figures; no heuristics. Bench players carry a small weight (config `[chips]`).
 - The model is a ranking aid, not an oracle. Sanity-check every call against team news and your own eyes.

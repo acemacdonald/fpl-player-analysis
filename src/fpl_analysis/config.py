@@ -40,6 +40,7 @@ class Settings:
     differential_max_ownership: float
     min_chance_of_playing: int
     min_minutes_for_rates: int
+    shrinkage_games: float
     weight_form: float
     weight_season_ppg: float
     weight_xgi: float
@@ -69,6 +70,8 @@ class Settings:
             raise ValueError(f"analysis weights must sum to 1.0, got {total:.3f}")
         if self.horizon_gameweeks < 1:
             raise ValueError("horizon_gameweeks must be >= 1")
+        if self.shrinkage_games < 0:
+            raise ValueError("shrinkage_games must be >= 0 (0 disables shrinkage)")
         if set(self.fdr_multiplier) != {1, 2, 3, 4, 5}:
             raise ValueError("fdr_multiplier must define keys 1..5")
         for w in (self.chips_bench_weight_freehit, self.chips_bench_weight_wildcard):
@@ -117,6 +120,7 @@ def load_settings(path: str | Path | None = None) -> Settings:
         differential_max_ownership=float(get("analysis", "differential_max_ownership")),
         min_chance_of_playing=int(get("analysis", "min_chance_of_playing")),
         min_minutes_for_rates=int(get("analysis", "min_minutes_for_rates")),
+        shrinkage_games=float(get("analysis", "shrinkage_games", 3.0)),
         weight_form=float(get("analysis", "weight_form")),
         weight_season_ppg=float(get("analysis", "weight_season_ppg")),
         weight_xgi=float(get("analysis", "weight_xgi")),

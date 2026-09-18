@@ -17,24 +17,24 @@ active_chip = ""             # "" none, or wildcard / freehit / bboost / 3xc
 captain = "Haaland"
 vice_captain = "Gakpo"
 
-starters = [                 # exactly 11, in formation order: GKP, DEFs, MIDs, FWDs
-    "Raya",
-    "N.Williams", "Calafiori", "Bogle",
-    "Ndiaye", "Ødegaard", "Cunha", "Gakpo",
-    "Haaland", "Isak", "Barry"
-]
-bench = [                    # exactly 4, in bench order: GKP first
-    { name = "Verbruggen", position = "GKP" },
-    "Dedić", "M.Sangaré", "Virgil"
-]
-
 #starters = [                 # exactly 11, in formation order: GKP, DEFs, MIDs, FWDs
 #    "Raya",
-#    "Williams", "Calafiori", "Bogle",
-#    "Ndiaye", "Odegaard", "Cunha", "Gakpo", "M.Sangaré",
-#    "Haaland", "Wissa",
+#    "N.Williams", "Calafiori", "Bogle",
+#    "Ndiaye", "Ødegaard", "Cunha", "Gakpo",
+#    "Haaland", "Isak", "Barry"
 #]
 #bench = [                    # exactly 4, in bench order: GKP first
-#    { name = "Palmer", position = "GKP" },
-#    "João Pedro", "De Cuyper", "van Ewijk",
+#    { name = "Verbruggen", position = "GKP" },
+#    "Dedić", "M.Sangaré", "Virgil"
 #]
+
+starters = [                 # exactly 11, in formation order: GKP, DEFs, MIDs, FWDs
+    "Raya",
+    "Kayode", "Calafiori", "Gvardiol",
+    "Tavernier", "Saka", "Gibbs-White", "Gakpo", "M.Sangaré",
+    "Haaland", "Wissa",
+]
+bench = [                    # exactly 4, in bench order: GKP first
+    { name = "Palmer", position = "GKP" },
+    "João Pedro", "De Cuyper", "van Ewijk",
+]

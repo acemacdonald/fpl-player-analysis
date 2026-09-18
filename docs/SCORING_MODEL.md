@@ -23,13 +23,13 @@ purpose is to order players and swaps, not to forecast a score.
 ## 2. base_rate — three signals, blended
 
 ```
-base_rate = 0.45 × form_used + 0.30 × season_ppg + 0.25 × xgi_used
+base_rate = 0.45 × form_used + 0.30 × ppg_used + 0.25 × xgi_used
 ```
 
 | Signal | Source | What it captures | Weakness it brings |
 |--------|--------|------------------|--------------------|
 | `form_used` | API `form` = average points per match over the last 30 days | Recent output, role changes, hot streaks | Noisy (4–5 matches), zero when a player hasn't featured in 30 days |
-| `season_ppg` | API `points_per_game` | Stable output level | Slow to react to role changes; includes early-season fixtures |
+| `ppg_used` | API `points_per_game`, **shrunk** towards the position's typical PPG while the sample is small (below) | Stable output level | Slow to react to role changes; includes early-season fixtures |
 | `xgi_used` | Computed from per-90 underlying stats (below) | *Process* rather than outcome — players who create chances keep scoring even when finishing runs cold | Per-90 rates lie on small samples |
 
 Why these weights: form gets the most weight because FPL is played week to week and role
@@ -59,13 +59,38 @@ conceded is xGC/90 — a standard clean-sheet approximation.
 Not modelled yet: defensive-contribution points (Phase 2.3), penalty-taker uplift
 (`penalties_order` is staged, unused), yellow-card drag.
 
+### Small samples: PPG shrinkage
+
+Points-per-game is an average, and an average of one game is not a rate. A defender who keeps
+a clean sheet in his only start has `points_per_game = 8.0` — the same number as an elite
+full-back after ten starts — and the API's `form` (points ÷ matches in the last 30 days) has the
+same problem. The model therefore blends each player's PPG with the **typical PPG for his
+position**, weighted by how much he has actually played:
+
+```
+games   = minutes / 90
+prior   = median points_per_game of players in the position with >= min_minutes_for_rates minutes
+          (2.0 — a full game's appearance points — until anyone qualifies)
+ppg_used = (season_ppg × games + prior × k) / (games + k)        k = shrinkage_games (3)
+```
+
+`k` is the number of "phantom" games of the prior. With a defender prior of ~3.2: one 8-point
+game gives `(8×1 + 3.2×3) / 4 = 4.4`; four such games give 6.3; ten give 7.0. So one start
+proves little, ten starts prove a lot, and the formula says exactly that. It is textbook
+Bayesian shrinkage towards a group mean; set `shrinkage_games = 0` to switch it off. `form` is
+**not** shrunk — its window is at most five matches for everyone, so it is uniformly noisy
+rather than selectively misleading — and that is a candidate for Phase 2.4's backtest.
+
 ### Two guards on the signals
 
 1. **Zero form ≠ bad form.** If `form = 0` but the player has minutes this season, they simply
-   haven't played in 30 days (injury, suspension, rotation). The model substitutes `season_ppg`
+   haven't played in 30 days (injury, suspension, rotation). The model substitutes `ppg_used`
    so a returning player isn't buried at zero.
 2. **Small-sample rates.** `xgi_points_rate` is only trusted once a player has
-   `min_minutes_for_rates` (180) minutes. Below that its weight moves onto `season_ppg`.
+   `min_minutes_for_rates` (180) minutes. Below that its weight moves onto `ppg_used` — the
+   shrunk figure. (An earlier version fell back to the raw PPG, which put 55% of a one-game
+   player's base rate on that single game. That is how a one-start defender briefly ranked
+   sixth in the league.)
 
 ## 3. availability
 
@@ -77,8 +102,16 @@ start_share   = min(1, starts / team matches played)    (1.0 before the season s
 status_factor = 0 if status in ('u','n') else 1         unavailable / not in squad
 ```
 
-This is the crude part of the model and the first thing Phase 2 improves. It penalises new
-signings (few starts, many team games) and ignores substitute minutes. A player flagged
+**Team matches played is counted from finished fixtures** (`stg_team_fixtures WHERE
+is_finished`), not taken from the API's `teams[].played`, which is always 0. Until GW5 2026/27
+the model used the API field, tripped the divide-by-zero guard and gave *every* player
+`start_share = 1.0` — the only mechanism separating regulars from rotation options was switched
+off. `tests/test_model_small_samples.py` now pins the synthetic season's `played` to 0 so the
+same mistake cannot pass CI again.
+
+This is still the crude part of the model and the first thing Phase 2 improves. It penalises new
+signings (few starts, many team games) and gives impact substitutes (minutes but no starts)
+an availability of 0 — a minutes-based model (Phase 2.2) is the proper fix. A player flagged
 `is_injury_risk` (chance below 75%) is additionally excluded from transfer-in suggestions.
 
 ## 4. Fixture multipliers

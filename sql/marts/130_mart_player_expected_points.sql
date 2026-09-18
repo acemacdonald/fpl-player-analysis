@@ -1,26 +1,31 @@
 -- materialized: table
 -- Mart: one row per player per upcoming fixture in the horizon, with modelled expected points.
 --
---   base_rate  = w_form * form + w_ppg * season_ppg + w_xgi * xgi_points_rate
+--   base_rate  = w_form * form_used + w_ppg * ppg_used + w_xgi * xgi_used
 --   ep         = base_rate * availability * fdr_multiplier * home_multiplier
+--
+-- ppg_used is season_ppg_shrunk (mart_player_form): season PPG pulled towards the position's
+-- typical level while the sample is small, so one big game cannot masquerade as a rate.
 --
 -- Guards (each is a deliberate modelling choice, see docs/SCORING_MODEL.md):
 --   * form of 0 with minutes > 0 means "hasn't played in 30 days", not "plays badly":
---     substitute season_ppg so a returning player isn't buried.
+--     substitute the shrunk PPG so a returning player isn't buried.
 --   * xgi_points_rate is only trusted once a player has min_minutes_for_rates minutes;
---     before that its weight moves onto season_ppg.
+--     before that its weight moves onto the shrunk PPG (NOT the raw one — that fallback
+--     used to double the weight on a one-game sample).
 WITH rates AS (
     SELECT
         f.*,
-        CASE WHEN f.form_signal = 0 AND f.minutes > 0 THEN f.season_ppg ELSE f.form_signal END AS form_used,
-        CASE WHEN f.rates_are_trusted THEN f.xgi_points_rate ELSE f.season_ppg END            AS xgi_used
+        f.season_ppg_shrunk                                                                   AS ppg_used,
+        CASE WHEN f.form_signal = 0 AND f.minutes > 0 THEN f.season_ppg_shrunk ELSE f.form_signal END AS form_used,
+        CASE WHEN f.rates_are_trusted THEN f.xgi_points_rate ELSE f.season_ppg_shrunk END     AS xgi_used
     FROM {{ ref('mart_player_form') }} AS f
 ),
 base AS (
     SELECT
         r.*,
         {{ var('weight_form') }}       * COALESCE(r.form_used, 0)
-        + {{ var('weight_season_ppg') }} * COALESCE(r.season_ppg, 0)
+        + {{ var('weight_season_ppg') }} * COALESCE(r.ppg_used, 0)
         + {{ var('weight_xgi') }}      * COALESCE(r.xgi_used, 0)                             AS base_rate
     FROM rates AS r
 )
@@ -42,6 +47,7 @@ SELECT
     o.fixture_label,
     b.form_used,
     b.season_ppg,
+    b.ppg_used,
     b.xgi_used,
     b.base_rate,
     b.availability,

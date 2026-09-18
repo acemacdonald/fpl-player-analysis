@@ -43,6 +43,8 @@ unmodelled).
   `price_change_*` fields, `scout_risks`.
 - **Picks `multiplier`**: 0 benched, 1 playing, 2 captain, 3 triple captain.
 - **Free transfers are not exposed** anywhere public — see `fpl_analysis.squad`.
+- **`teams[].played` is always 0** (as are `win`/`draw`/`loss`/`points`). Count finished fixtures per team
+  instead — `mart_player_form` does. Trusting it silently disabled the start-share part of availability.
 - **Upcoming-gameweek picks and transfers are hidden until the deadline.** `entry/{id}/event/{next_gw}/picks/`
   returns 404 and `entry/{id}/transfers/` omits the pending moves until the deadline passes (verified live
   17 Sep 2026: GW5 picks 404, GW5 transfers absent, while the site showed them). Before the deadline the
