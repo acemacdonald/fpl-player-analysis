@@ -44,8 +44,9 @@ personal preferences (depth of reasoning, explain-the-why, Snowflake SQL standar
   Flag any DuckDB-only syntax you have to use.
 - **The scoring model must stay explainable.** Any change to weights, multipliers or formulas
   goes into `docs/SCORING_MODEL.md` with the reasoning, in the same commit.
-- **Reports are the decision log.** `reports/GWxx.md` files are committed. Never overwrite a
-  past gameweek's report; regenerate only the upcoming one.
+- **Reports are local output, not repo content.** `reports/*.md` is git-ignored: Angus runs the
+  pipeline for more than one entry id and the file is keyed by gameweek only. The snapshot under
+  `data/raw/` is the record; a report can always be regenerated from it.
 - **The public API hides pre-deadline picks/transfers.** Before a deadline the pipeline sees last
   week's squad; `config/squad_override.toml` is the stop-gap, authenticated `my-team` is Phase 2.0.
 - **Angus's squad is entry 234865.** Squad-aware logic (transfers, captaincy, bench) must

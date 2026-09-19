@@ -16,9 +16,10 @@ data/raw/*
 data/*.duckdb
 data/*.duckdb.wal
 
-# --- Generated reports are committed on purpose (they are the weekly decision log) ---
-# reports/ is tracked. Remove the line below if you'd rather keep them local.
-# reports/*.md
+# --- Generated reports stay local: they are per-manager output (you may run several entry ids)
+#     and are regenerated from snapshots. Keep the folder, ignore the files.
+reports/*.md
+!reports/.gitkeep
 
 # --- Cowork workspace memory (personal, never pushed) ---
 MEMORY.md

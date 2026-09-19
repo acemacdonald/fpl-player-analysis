@@ -24,7 +24,7 @@ Two objectives sit behind the FPL objective:
 - Official FPL API only (`https://fantasy.premierleague.com/api/`, no auth, free).
 - All ~660 players across the 20 clubs; the tracked manager's public squad data.
 - Local DuckDB warehouse; SQL models written to Snowflake conventions.
-- Weekly Markdown report committed to `reports/` as the decision log.
+- Weekly Markdown report generated into `reports/` (local; regenerable from the snapshot).
 - Jupyter notebooks for exploration in VS Code.
 
 **Out of scope (for now)**
@@ -73,7 +73,7 @@ Angus's first commit.
 | 1.3 Validate squad logic | Squad table shows the right 15, captain and bank; estimated FTs match the site (expected 4 for GW5 with 0 transfers made) | Any mismatch logged as an issue with the API payload attached |
 | 1.4 Read the report critically | Do the captaincy and transfer suggestions pass the eye test? Note every disagreement in `docs/MODEL_LOG.md` (create it) | First entry in the model log |
 | 1.5 Create the GitHub repo | `git init`, push `main`, enable Actions, add the badge to README | CI green on first push |
-| 1.6 Commit GW05 report | The decision log starts | `reports/GW05.md` on `main` |
+| 1.6 First live GW05 report | Pipeline proven end to end | `reports/GW05.md` renders from live data |
 
 ### Phase 2 — Make the model honest (GW6–GW9)
 
@@ -128,7 +128,6 @@ available, the migration is:
 | Any day, 02:30 UK (optional, from Phase 3) | Price snapshot | `fpl refresh --no-history` |
 | Thursday evening | Full refresh after the pressers start | `fpl refresh` |
 | Friday (deadline day) | Build + report, read it, decide, act on the FPL site | `fpl build && fpl report` (or `fpl run`) |
-| Friday | Commit the report and any config change | `git add reports/ config/ && git commit -m "GW05 decisions"` |
 | Monday/Tuesday | Backtest last GW (from Phase 2) | notebook 03, last section |
 
 The whole Friday loop should be under five minutes (S1).
@@ -148,7 +147,7 @@ The whole Friday loop should be under five minutes (S1).
 ## 7. Repository conventions
 
 - Branch per phase task (`feat/2.1-selling-price`), PR to `main`, CI must be green.
-- Commit reports on `main` directly — they are data, not code.
+- Reports and snapshots are never committed; the snapshot is the record of what the model saw.
 - SQL: Snowflake style (see `CLAUDE.md`). Python: `ruff` clean, type hints, docstrings that
   explain *why*.
 - Every model file starts with a comment stating its grain ("one row per …") and purpose.
@@ -160,4 +159,4 @@ The whole Friday loop should be under five minutes (S1).
 2. `fpl run` → confirm `reports/GW05.md` renders from live data (Phase 1.1).
 3. Check the estimated FT figure and the squad table against the FPL site (Phase 1.3).
 4. `git init`, first commit, push to GitHub, confirm CI (Phase 1.5).
-5. Read the GW5 report, make the Friday decisions, commit the report.
+5. Read the GW5 report, make the Friday decisions.

@@ -71,7 +71,12 @@ Never `git push` to `main` directly — the branch rule will reject it anyway.
 - **Tests are hermetic.** They must never depend on the live `config/` values (your entry id, your
   squad override) — `tests/conftest.py` redirects every path via `FPL_PATHS_*` env vars. A test that
   breaks when someone changes their own settings is a broken test, not a broken pipeline.
-- **Reports are the decision log.** Don't rewrite a past gameweek's `reports/GWxx.md`.
+- **Reports and snapshots are local.** `reports/*.md` and `data/raw/*` are git-ignored; never
+  commit either. Config flips for a different entry id are working state, not commits.
+- **Branch from `main` without tracking it.** `git checkout -b feat/x origin/main` silently sets
+  `main` as the branch's push target, so a later `git push` (or Desktop "Push origin") lands on
+  `main`. Use `git checkout -b feat/x --no-track origin/main`, or branch from your local `main`,
+  and check `git branch -vv` shows no upstream before the first push.
 
 ## 4. Things that are not in the repo
 

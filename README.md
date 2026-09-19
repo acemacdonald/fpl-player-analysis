@@ -58,7 +58,7 @@ src/fpl_analysis/           api · ingest · store · squad · squad_override ·
 sql/staging/                one typed view per raw table (no business logic)
 sql/marts/                  fixtures outlook, EP model, squad, captaincy, transfers, differentials
 notebooks/                  01 explore API · 02 player analysis · 03 weekly decision
-reports/                    committed gameweek reports = the decision log
+reports/                    generated gameweek reports (local, git-ignored)
 docs/                       PROJECT_PLAN · ARCHITECTURE · SCORING_MODEL · FPL_API_REFERENCE · DATA_DICTIONARY
 tests/                      pytest on a synthetic snapshot (offline, seconds)
 data/                       raw snapshots + DuckDB file (git-ignored)
@@ -78,7 +78,8 @@ exactly (integer programme over the same EP). Every number in the report traces 
 ## Weekly routine
 
 Thursday evening `fpl refresh`; Friday `fpl build && fpl report`, read the report, make the
-calls on the FPL site, `git commit reports/`. Under five minutes. Details and the season plan:
+calls on the FPL site. Under five minutes. Reports and snapshots stay local — the snapshot is the
+record, the report can always be regenerated from it. Details and the season plan:
 [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md).
 
 ## Contributing
@@ -93,8 +94,8 @@ pytest                 # 21 tests on a synthetic season, no network
 ruff check .           # lint
 ```
 
-CI (`.github/workflows/ci.yml`) runs both on every push. Snapshots are never committed;
-reports are.
+CI (`.github/workflows/ci.yml`) runs both on every push. Snapshots and reports are never
+committed.
 
 ## Why DuckDB and SQL rather than pandas?
 
