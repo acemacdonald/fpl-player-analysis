@@ -75,11 +75,13 @@ No secrets exist (the API is public), so config is committed. TOML keeps types
 overrides (`FPL_ANALYSIS_WEIGHT_FORM=0.6`) exist for two reasons: CI, and cheap what-if
 sensitivity runs from a notebook without editing the file.
 
-### D6. The report is Markdown, generated from marts, and committed
+### D6. The report is Markdown, generated from marts, and kept local
 
-Markdown renders in GitHub, VS Code and any editor; it diffs; it needs no server. Committing
-`reports/GWxx.md` turns the repo into a decision log you can audit at season end ("what did
-the model say in GW12, and what did I do?"). Rendering goes through a Jinja template so the
+Markdown renders in GitHub, VS Code and any editor; it diffs; it needs no server. The reports
+are *not* committed: the file is keyed by gameweek only and the pipeline is run for more than
+one manager, so a committed `reports/GW05.md` would be whichever entry ran last. The audit trail
+("what did the model say in GW12?") is the dated snapshot under `data/raw/` plus the code at that
+commit — the report is a pure function of the two. Rendering goes through a Jinja template so the
 layout can change without touching SQL, and every table is a straight projection of a mart —
 if a number in the report is wrong, the mart is wrong, and there is exactly one place to look.
 
